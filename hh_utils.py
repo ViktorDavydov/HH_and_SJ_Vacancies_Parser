@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import time
+from operator import itemgetter
 
 from abstract_classes import GetVacanciesByAPI, VacanciesJson
 
@@ -45,20 +46,64 @@ class HHGetVacByAPI(GetVacanciesByAPI):
         return vacancies
 
 
-class HHVacanciesInfo(HHGetVacByAPI):
+class HHVacancies:
 
+    def __init__(self, title, url, salary_from, salary_to, salary_currency,
+                 company_name, description):
+        self.title = title
+        self.url = url
+        self.salary_from = salary_from
+        self.salary_to = salary_to
+        self.salary_currency = salary_currency
+        self.company_name = company_name
+        self.description = description
+
+    def __repr__(self):
+        return (f"Данная вакансия имеет следующие параметры:"
+                f"Наименование вакансии: {self.title}"
+                f"Ссылка на вакансию: {self.url}"
+                f"Зарплата от: {self.salary_from}"
+                f"Зарплата до: {self.salary_to}"
+                f"Валюта: {self.salary_currency}"
+                f"Название компании: {self.company_name}"
+                f"Требования: {self.description}")
+
+    def __str__(self):
+        return (f"Наименование вакансии: {self.title}"
+                f"Ссылка на вакансию: {self.url}"
+                f"Зарплата от: {self.salary_from}"
+                f"Зарплата до: {self.salary_to}"
+                f"Валюта: {self.salary_currency}"
+                f"Название компании: {self.company_name}"
+                f"Требования: {self.description}")
+
+    def __ge__(self, other):
+        if isinstance(self.salary_from, int):
+            result = self.salary_from >= other.salary_from
+        else:
+            result = "Упс. Кажется в одной из вакансий не указана минимальная ЗП"
+
+        return result
+
+
+class VacanciesInJson(HHGetVacByAPI, VacanciesJson):
     def __init__(self, city_name, prof_name):
         super().__init__(city_name, prof_name)
-        # self.title = None
-        # self.url = None
-        # self.salary_from = None
-        # self.salary_to = None
-        # self.company_name = None
-        # self.description = None
         self.vacancies_list = []
+        self.filtered_vac_by_min_sal = []
+        self.top_n_vac = []
 
-    def get_vac_info(self):
-        for item in self.get_vacancies()["items"]:
+    def save_to_json(self):
+        with open("json_vac_info.json", "w", encoding="utf-8") as file:
+            json.dump(self.get_vacancies(), file, indent=2, ensure_ascii=False)
+
+    def get_json(self):
+        with open("json_vac_info.json", "r", encoding="utf-8") as file:
+            vacancies_info = json.load(file)
+            return vacancies_info
+
+    def get_all_vac_info(self):
+        for item in self.get_json()["items"]:
             if item["salary"] is None:
                 salary_from = salary_to = salary_currency = "Не указано"
             else:
@@ -87,19 +132,33 @@ class HHVacanciesInfo(HHGetVacByAPI):
 
         return self.vacancies_list
 
+    def get_vac_by_min_salary(self, salary_minimum):
 
-class VacanciesInJson(VacanciesJson):
-    def __init__(self):
-        pass
+        for item in self.get_json()["items"]:
+            if (item["salary"] is not None
+                    and item["salary"]["from"] is not None
+                    and item["salary"]["from"] >= salary_minimum):
+                self.filtered_vac_by_min_sal.append(item)
+        return self.filtered_vac_by_min_sal
 
-    def save_to_json(self):
-        pass
+    def get_top_n_vacancies_by_sal(self, vac_count):
+        filtered_list = []
+        for item in self.get_json()["items"]:
+            if item["salary"] is not None and item["salary"]["from"] is not None:
+                filtered_list.append(item)
 
-    def add_to_json(self):
-        pass
+        final_sorted = sorted(filtered_list, key=lambda d: d["salary"]["from"], reverse=True)
 
-    def get_from_json(self):
-        pass
+        return final_sorted[:vac_count]
+
+    def get_vac_by_keyword(self, keyword):
+        for item in self.get_json()["items"]:
+            if (item["snippet"] is not None and item["snippet"]["requirement"] is not None
+                    and item["snippet"]["responsibility"] is not None):
+                if (keyword in item["snippet"]["requirement"] or
+                        keyword in item["snippet"]["responsibility"]):
+                    return item
 
     def delete_from_json(self):
-        pass
+        with open("json_vac_info.json", "w") as file:
+            pass
