@@ -45,3 +45,7 @@ class VacanciesInFileJson(ABC):
     @abstractmethod
     def delete_from_json(self):
         pass
+
+    @abstractmethod
+    def get_valid_vacancies_with_salary(self):
+        pass
