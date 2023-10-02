@@ -12,7 +12,7 @@ class GetVacanciesByAPI(ABC):
         pass
 
 
-class VacanciesInJson(ABC):
+class VacanciesInFileJson(ABC):
 
     @abstractmethod
     def save_to_json(self):
@@ -36,6 +36,10 @@ class VacanciesInJson(ABC):
 
     @abstractmethod
     def get_vac_by_keyword(self, keyword):
+        pass
+
+    @abstractmethod
+    def formatting_output_data(self, input_list):
         pass
 
     @abstractmethod
