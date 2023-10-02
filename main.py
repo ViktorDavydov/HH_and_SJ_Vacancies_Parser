@@ -1,14 +1,15 @@
-from hh_utils import HHVacanciesInfo
-from sj_utils import SJAPI
-import json
+from hh_utils import HHUserInterface
 
+print(f"Привет! Я программа для сбора информации о вакансиях! Приступим!")
+while True:
+    platform_input = input(f"Выбери платформу:\n1 - HeadHunter\n2 - SuperJob\n> ")
+    if platform_input == "1":
+        hh_block = HHUserInterface()
+        hh_block.user_interaction()
 
-city_name_input = input(f"Введите название города: ")
-prof_input = input(f"Введите название профессии: ")
+    elif platform_input == "2":
+        pass
 
-hh = HHVacanciesInfo(city_name_input, prof_input)
-sj = SJAPI()
-
-
-print(json.dumps(hh.get_vac_info(), indent=2, ensure_ascii=False))
-
+    else:
+        print(f"Упс. Кажется в моей базе нет такой платформы. Попробуй еще раз!")
+        print()

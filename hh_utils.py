@@ -1,10 +1,7 @@
 import requests
 import json
-import os
-import time
-from operator import itemgetter
 
-from abstract_classes import GetVacanciesByAPI, VacanciesJson
+from abstract_classes import GetVacanciesByAPI, VacanciesInJson
 
 
 class HHGetVacByAPI(GetVacanciesByAPI):
@@ -86,7 +83,7 @@ class HHVacancies:
         return result
 
 
-class VacanciesInJson(HHGetVacByAPI, VacanciesJson):
+class VacanciesJson(HHGetVacByAPI, VacanciesInJson):
     def __init__(self, city_name, prof_name):
         super().__init__(city_name, prof_name)
         self.vacancies_list = []
@@ -142,12 +139,11 @@ class VacanciesInJson(HHGetVacByAPI, VacanciesJson):
         return self.filtered_vac_by_min_sal
 
     def get_top_n_vacancies_by_sal(self, vac_count):
-        filtered_list = []
         for item in self.get_json()["items"]:
             if item["salary"] is not None and item["salary"]["from"] is not None:
-                filtered_list.append(item)
+                self.top_n_vac.append(item)
 
-        final_sorted = sorted(filtered_list, key=lambda d: d["salary"]["from"], reverse=True)
+        final_sorted = sorted(self.top_n_vac, key=lambda d: d["salary"]["from"], reverse=True)
 
         return final_sorted[:vac_count]
 
@@ -162,3 +158,29 @@ class VacanciesInJson(HHGetVacByAPI, VacanciesJson):
     def delete_from_json(self):
         with open("json_vac_info.json", "w") as file:
             pass
+
+
+class HHUserInterface:
+
+    def user_interaction(self):
+        print(f"Отлично! Ты выбрал платформу HeadHunter\n")
+        city_name_input = input(f"Для начала узнаем в каком "
+                                f"городе вы ищете вакансии, "
+                                f"например, Москва или Казань:\n> ").capitalize()
+        prof_input = input(
+            f"А теперь мне необходимо узнать название профессии, например"
+            f"Python разработчик или Визажист:\n> ").capitalize()
+        hh_instance = VacanciesJson(city_name_input, prof_input)
+        hh_instance.save_to_json()
+        while True:
+            function_input = input(f"Доступны следующие действия:\n"
+                                   f"1 - Вывести весь список вакансий (не более 100)\n"
+                                   f"2 - Вывести топ N вакансий (по убыванию)\n"
+                                   f"3 - Отфильтровать список по зарплате "
+                                   f"(указывается минимальная ЗП)\n"
+                                   f"4 - Найти вакансию по ключевому слову\n> ")
+
+            if function_input == "1":
+                for vacancy in hh_instance.get_all_vac_info():
+                    print(f"{json.dumps(vacancy, indent=2, ensure_ascii=False)}")
+
