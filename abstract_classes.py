@@ -25,6 +25,3 @@ class JsonManager(ABC):
     @abstractmethod
     def delete_from_json(self):
         pass
-
-
-
